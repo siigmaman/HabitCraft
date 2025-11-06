@@ -1,0 +1,3 @@
+/home/eduardade/HabitCraft/build/CMakeFiles/HabitCraft.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/edit_cache.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/rebuild_cache.dir
