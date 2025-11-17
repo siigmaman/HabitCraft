@@ -30,5 +30,9 @@ public:
 
     void showCurrentStreaks(int userId);
 
+    void listUserHabits(int userId);
+
+    void deleteHabit(int habitId);
+
     ~Database();
 };

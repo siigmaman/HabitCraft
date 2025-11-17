@@ -321,6 +321,71 @@ void Database::showCurrentStreaks(int userId) {
     }
 }
 
+void Database::listUserHabits(int userId) {
+    if (!isConnected()) return;
+
+    try {
+        pqxx::work txn(*conn);
+        pqxx::result result = txn.exec_params(R"(
+            SELECT habit_id, title, description, is_active
+            FROM habits 
+            WHERE user_id = $1
+            ORDER BY habit_id
+        )", userId);
+
+        std::cout << "\n ВАШИ ПРИВЫЧКИ:" << std::endl;
+        std::cout << "=================" << std::endl;
+
+        if (result.empty()) {
+            std::cout << "• У вас пока нет привычек" << std::endl;
+            return;
+        }
+
+        for (const auto& row : result) {
+            std::string status = row["is_active"].as<bool>() ? "активна" : "неактивна";
+            std::cout << "ID: " << row["habit_id"].c_str() 
+                      << " | " << row["title"].c_str()
+                      << " | " << status 
+                      << std::endl;
+            if (!row["description"].is_null()) {
+                std::cout << "   Описание: " << row["description"].c_str() << std::endl;
+            }
+            std::cout << std::endl;
+        }
+
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка получения списка привычек: " << e.what() << std::endl;
+    }
+}
+
+void Database::deleteHabit(int habitId) {
+    if (!isConnected()) return;
+
+    try {
+        pqxx::work txn(*conn);
+        
+        pqxx::result check = txn.exec_params(
+            "SELECT title FROM habits WHERE habit_id = $1", 
+            habitId
+        );
+        
+        if (check.empty()) {
+            std::cout << "Привычка с ID " << habitId << " не найдена!" << std::endl;
+            return;
+        }
+        
+        std::string habitTitle = check[0]["title"].c_str();
+        
+        txn.exec_params("DELETE FROM habits WHERE habit_id = $1", habitId);
+        txn.commit();
+        
+        std::cout << "Привычка '" << habitTitle << "' (ID: " << habitId << ") удалена!" << std::endl;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка удаления привычки: " << e.what() << std::endl;
+    }
+}
+
 Database::~Database() {
     if (conn && conn->is_open()) {
         conn->close();

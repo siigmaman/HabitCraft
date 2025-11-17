@@ -1,15 +1,18 @@
 #include "Database.hpp"
 #include <iostream>
 #include <string>
+#include <limits>  
 
 void showMainMenu() {
     std::cout << "\n HABIT CRAFT - Трекер привычек" << std::endl;
     std::cout << "==================================" << std::endl;
     std::cout << "1. Добавить привычку" << std::endl;
     std::cout << "2. Отметить выполнение привычки" << std::endl;
-    std::cout << "3. Показать всю аналитику" << std::endl;
-    std::cout << "4. Показать прогресс за неделю" << std::endl;
-    std::cout << "5. Выйти" << std::endl;
+    std::cout << "3. Показать все привычки" << std::endl;
+    std::cout << "4. Удалить привычку" << std::endl;
+    std::cout << "5. Показать всю аналитику" << std::endl;
+    std::cout << "6. Показать прогресс за неделю" << std::endl;
+    std::cout << "7. Выйти" << std::endl;
     std::cout << "Выберите опцию: ";
 }
 
@@ -19,7 +22,7 @@ void addHabitInteractive(Database& db) {
     
     std::cout << "\n ДОБАВЛЕНИЕ ПРИВЫЧКИ" << std::endl;
     std::cout << "Название привычки: ";
-    std::cin.ignore();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, title);
     
     std::cout << "Описание: ";
@@ -40,7 +43,7 @@ void logHabitInteractive(Database& db) {
     std::cin >> habitId;
     
     std::cout << "Дата (ГГГГ-ММ-ДД): ";
-    std::cin.ignore();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, date);
     
     std::cout << "Заметки: ";
@@ -50,6 +53,27 @@ void logHabitInteractive(Database& db) {
     std::cin >> rating;
     
     db.logHabitComplection(habitId, date, notes, rating);
+}
+
+void deleteHabitInteractive(Database& db) {
+    int habitId;
+    char confirm;
+    
+    std::cout << "\n УДАЛЕНИЕ ПРИВЫЧКИ" << std::endl;
+    
+    db.listUserHabits(1);
+    
+    std::cout << "Введите ID привычки для удаления: ";
+    std::cin >> habitId;
+    
+    std::cout << " Вы уверены? Это действие нельзя отменить! (y/N): ";
+    std::cin >> confirm;
+    
+    if (confirm == 'y' || confirm == 'Y') {
+        db.deleteHabit(habitId);
+    } else {
+        std::cout << " Удаление отменено" << std::endl;
+    }
 }
 
 void showAnalytics(Database& db) {
@@ -63,6 +87,20 @@ void showProgress(Database& db) {
     db.showProgressBars(1);
 }
 
+int getMenuChoice() {
+    int choice;
+    while (true) {
+        if (std::cin >> choice) {
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            return choice;
+        } else {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Неверный ввод! Пожалуйста, введите число: ";
+        }
+    }
+}
+
 int main() {
     std::cout << "Запуск HabitCraft!" << std::endl;
     
@@ -71,7 +109,7 @@ int main() {
         "port=5432 "
         "dbname=habitcraft "
         "user=habit_user "
-        "password=my_secure_password";
+        "password=my_secure_password";  
     
     Database db(connection_string);
     
@@ -90,7 +128,7 @@ int main() {
     
     while (running) {
         showMainMenu();
-        std::cin >> choice;
+        choice = getMenuChoice();  
         
         switch (choice) {
             case 1:
@@ -100,12 +138,18 @@ int main() {
                 logHabitInteractive(db);
                 break;
             case 3:
-                showAnalytics(db);
+                db.listUserHabits(1);
                 break;
             case 4:
-                showProgress(db);
+                deleteHabitInteractive(db);
                 break;
             case 5:
+                showAnalytics(db);
+                break;
+            case 6:
+                showProgress(db);
+                break;
+            case 7:
                 running = false;
                 std::cout << "\n До свидания!" << std::endl;
                 break;
