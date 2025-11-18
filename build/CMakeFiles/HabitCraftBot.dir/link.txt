@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wextra -O2 CMakeFiles/HabitCraftBot.dir/src/main.cpp.o CMakeFiles/HabitCraftBot.dir/src/Database.cpp.o CMakeFiles/HabitCraftBot.dir/src/TelegramBot.cpp.o -o habitcraft-bot  /usr/lib/x86_64-linux-gnu/libpqxx.so /usr/lib/x86_64-linux-gnu/libpq.so /usr/lib/x86_64-linux-gnu/libcurl.so 

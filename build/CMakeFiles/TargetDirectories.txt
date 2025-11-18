@@ -1,3 +1,8 @@
-/home/eduardade/HabitCraft/build/CMakeFiles/HabitCraft.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/HabitCraftBot.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/check-dependencies.dir
 /home/eduardade/HabitCraft/build/CMakeFiles/edit_cache.dir
 /home/eduardade/HabitCraft/build/CMakeFiles/rebuild_cache.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/list_install_components.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/install.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/install/local.dir
+/home/eduardade/HabitCraft/build/CMakeFiles/install/strip.dir

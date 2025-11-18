@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/HabitCraft.dir/src/main.cpp.o CMakeFiles/HabitCraft.dir/src/Database.cpp.o -o HabitCraft  /usr/lib/x86_64-linux-gnu/libpqxx.so /usr/lib/x86_64-linux-gnu/libpq.so 

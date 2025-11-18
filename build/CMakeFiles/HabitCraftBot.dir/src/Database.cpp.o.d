@@ -1,5 +1,5 @@
-CMakeFiles/HabitCraft.dir/src/main.cpp.o: \
- /home/eduardade/HabitCraft/src/main.cpp /usr/include/stdc-predef.h \
+CMakeFiles/HabitCraftBot.dir/src/Database.cpp.o: \
+ /home/eduardade/HabitCraft/src/Database.cpp /usr/include/stdc-predef.h \
  /home/eduardade/HabitCraft/src/Database.hpp /usr/include/pqxx/pqxx \
  /usr/include/pqxx/internal/header-pre.hxx /usr/include/c++/13/version \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -66,13 +66,17 @@ CMakeFiles/HabitCraft.dir/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h \
+ /usr/include/x86_64-linux-gnu/bits/select2.h \
+ /usr/include/x86_64-linux-gnu/bits/select-decl.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
  /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
  /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
  /usr/include/x86_64-linux-gnu/bits/struct_mutex.h \
  /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h /usr/include/alloca.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
+ /usr/include/x86_64-linux-gnu/bits/stdlib.h \
  /usr/include/c++/13/bits/std_abs.h \
  /usr/include/c++/13/pstl/glue_algorithm_defs.h \
  /usr/include/c++/13/pstl/execution_defs.h /usr/include/c++/13/cassert \
@@ -93,6 +97,8 @@ CMakeFiles/HabitCraft.dir/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h \
  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
+ /usr/include/x86_64-linux-gnu/bits/wchar2-decl.h \
+ /usr/include/x86_64-linux-gnu/bits/wchar2.h \
  /usr/include/c++/13/bits/allocator.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h \
  /usr/include/c++/13/bits/new_allocator.h \
@@ -118,9 +124,11 @@ CMakeFiles/HabitCraft.dir/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
- /usr/include/c++/13/cerrno /usr/include/errno.h \
- /usr/include/x86_64-linux-gnu/bits/errno.h /usr/include/linux/errno.h \
- /usr/include/x86_64-linux-gnu/asm/errno.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio2-decl.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio2.h /usr/include/c++/13/cerrno \
+ /usr/include/errno.h /usr/include/x86_64-linux-gnu/bits/errno.h \
+ /usr/include/linux/errno.h /usr/include/x86_64-linux-gnu/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
  /usr/include/c++/13/bits/charconv.h \
@@ -185,6 +193,8 @@ CMakeFiles/HabitCraft.dir/src/main.cpp.o: \
  /usr/include/c++/13/bits/streambuf.tcc /usr/include/pqxx/except.hxx \
  /usr/include/pqxx/internal/concat.hxx /usr/include/pqxx/strconv.hxx \
  /usr/include/c++/13/cstring /usr/include/string.h /usr/include/strings.h \
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
  /usr/include/c++/13/limits /usr/include/c++/13/sstream \
  /usr/include/c++/13/istream /usr/include/c++/13/ios \
  /usr/include/c++/13/bits/basic_ios.h \
@@ -253,4 +263,8 @@ CMakeFiles/HabitCraft.dir/src/main.cpp.o: \
  /usr/include/pqxx/stream_from.hxx /usr/include/pqxx/stream_to.hxx \
  /usr/include/pqxx/subtransaction.hxx /usr/include/pqxx/time.hxx \
  /usr/include/c++/13/chrono /usr/include/pqxx/transactor.hxx \
- /usr/include/pqxx/internal/header-post.hxx /usr/include/c++/13/iostream
+ /usr/include/pqxx/internal/header-post.hxx /usr/include/c++/13/iostream \
+ /usr/include/c++/13/fstream \
+ /usr/include/x86_64-linux-gnu/c++/13/bits/basic_file.h \
+ /usr/include/x86_64-linux-gnu/c++/13/bits/c++io.h \
+ /usr/include/c++/13/bits/fstream.tcc

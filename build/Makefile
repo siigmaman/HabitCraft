@@ -85,6 +85,51 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
+# Special rule for the target install
+install: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install
+
+# Special rule for the target install
+install/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
+
 # The main all target
 all: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/eduardade/HabitCraft/build/CMakeFiles /home/eduardade/HabitCraft/build//CMakeFiles/progress.marks
@@ -117,24 +162,37 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named HabitCraft
+# Target rules for targets named HabitCraftBot
 
 # Build rule for target.
-HabitCraft: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 HabitCraft
-.PHONY : HabitCraft
+HabitCraftBot: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 HabitCraftBot
+.PHONY : HabitCraftBot
 
 # fast build rule for target.
-HabitCraft/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraft.dir/build.make CMakeFiles/HabitCraft.dir/build
-.PHONY : HabitCraft/fast
+HabitCraftBot/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/build
+.PHONY : HabitCraftBot/fast
+
+#=============================================================================
+# Target rules for targets named check-dependencies
+
+# Build rule for target.
+check-dependencies: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 check-dependencies
+.PHONY : check-dependencies
+
+# fast build rule for target.
+check-dependencies/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/check-dependencies.dir/build.make CMakeFiles/check-dependencies.dir/build
+.PHONY : check-dependencies/fast
 
 src/Database.o: src/Database.cpp.o
 .PHONY : src/Database.o
 
 # target to build an object file
 src/Database.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraft.dir/build.make CMakeFiles/HabitCraft.dir/src/Database.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/Database.cpp.o
 .PHONY : src/Database.cpp.o
 
 src/Database.i: src/Database.cpp.i
@@ -142,7 +200,7 @@ src/Database.i: src/Database.cpp.i
 
 # target to preprocess a source file
 src/Database.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraft.dir/build.make CMakeFiles/HabitCraft.dir/src/Database.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/Database.cpp.i
 .PHONY : src/Database.cpp.i
 
 src/Database.s: src/Database.cpp.s
@@ -150,15 +208,39 @@ src/Database.s: src/Database.cpp.s
 
 # target to generate assembly for a file
 src/Database.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraft.dir/build.make CMakeFiles/HabitCraft.dir/src/Database.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/Database.cpp.s
 .PHONY : src/Database.cpp.s
+
+src/TelegramBot.o: src/TelegramBot.cpp.o
+.PHONY : src/TelegramBot.o
+
+# target to build an object file
+src/TelegramBot.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/TelegramBot.cpp.o
+.PHONY : src/TelegramBot.cpp.o
+
+src/TelegramBot.i: src/TelegramBot.cpp.i
+.PHONY : src/TelegramBot.i
+
+# target to preprocess a source file
+src/TelegramBot.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/TelegramBot.cpp.i
+.PHONY : src/TelegramBot.cpp.i
+
+src/TelegramBot.s: src/TelegramBot.cpp.s
+.PHONY : src/TelegramBot.s
+
+# target to generate assembly for a file
+src/TelegramBot.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/TelegramBot.cpp.s
+.PHONY : src/TelegramBot.cpp.s
 
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
 # target to build an object file
 src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraft.dir/build.make CMakeFiles/HabitCraft.dir/src/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/main.cpp.o
 .PHONY : src/main.cpp.o
 
 src/main.i: src/main.cpp.i
@@ -166,7 +248,7 @@ src/main.i: src/main.cpp.i
 
 # target to preprocess a source file
 src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraft.dir/build.make CMakeFiles/HabitCraft.dir/src/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/main.cpp.i
 .PHONY : src/main.cpp.i
 
 src/main.s: src/main.cpp.s
@@ -174,7 +256,7 @@ src/main.s: src/main.cpp.s
 
 # target to generate assembly for a file
 src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraft.dir/build.make CMakeFiles/HabitCraft.dir/src/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/HabitCraftBot.dir/build.make CMakeFiles/HabitCraftBot.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
 # Help Target
@@ -184,11 +266,19 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... install"
+	@echo "... install/local"
+	@echo "... install/strip"
+	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... HabitCraft"
+	@echo "... check-dependencies"
+	@echo "... HabitCraftBot"
 	@echo "... src/Database.o"
 	@echo "... src/Database.i"
 	@echo "... src/Database.s"
+	@echo "... src/TelegramBot.o"
+	@echo "... src/TelegramBot.i"
+	@echo "... src/TelegramBot.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

@@ -8,8 +8,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/eduardade/HabitCraft/src/Database.cpp" "CMakeFiles/HabitCraft.dir/src/Database.cpp.o" "gcc" "CMakeFiles/HabitCraft.dir/src/Database.cpp.o.d"
-  "/home/eduardade/HabitCraft/src/main.cpp" "CMakeFiles/HabitCraft.dir/src/main.cpp.o" "gcc" "CMakeFiles/HabitCraft.dir/src/main.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

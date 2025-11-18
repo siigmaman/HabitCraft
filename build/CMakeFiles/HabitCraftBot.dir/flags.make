@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -isystem /usr/include/postgresql
+CXX_INCLUDES = -I/home/eduardade/HabitCraft/src -isystem /usr/include/postgresql
 
-CXX_FLAGS = -std=gnu++17
+CXX_FLAGS =  -Wall -Wextra -O2 -std=c++17
 
