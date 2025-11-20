@@ -166,6 +166,19 @@ json TelegramBot::createConfirmationKeyboard() {
     };
 }
 
+json TelegramBot::createDescriptionKeyboard() {
+    return {
+        {"keyboard", {
+            {
+                {{"text", "Пропустить"}},
+                {{"text", "Назад"}}
+            }
+        }},
+        {"resize_keyboard", true},
+        {"one_time_keyboard", true}
+    };
+}
+
 std::string urlEncode(const std::string& value) {
     std::ostringstream escaped;
     escaped.fill('0');
@@ -248,21 +261,33 @@ void TelegramBot::handleAddHabit(long chat_id, const std::string& text, Database
     std::string current_state = getUserState(chat_id);
 
     if (text == "Добавить привычку") {
-        if (current_state == "waiting_habit_name") {
-            sendMessage(chat_id, "Вы уже добавляете привычку. Введите название или нажмите 'Назад' для отмены.");
-        } else {
-            setUserState(chat_id, "waiting_habit_name");
-            sendMessage(chat_id, "Введите название новой привычки:");
-        }
+        setUserState(chat_id, "waiting_habit_name");
+        sendMessage(chat_id, "Введите название новой привычки:");
         return;
     }
 
     if (current_state == "waiting_habit_name") {
+        if (text == "Назад") {
+            clearUserState(chat_id);
+            sendMessage(chat_id, "Добавление привычки отменено", createMainKeyboard());
+            return;
+        }
+        
         if (text.empty()) {
             sendMessage(chat_id, "Название привычки не может быть пустым. Попробуйте снова:");
             return;
         }
-        
+
+        {
+            std::lock_guard<std::mutex> lock(state_mutex);
+            user_temp_data[chat_id] = text;
+        }
+        setUserState(chat_id, "waiting_habit_frequency");
+        sendMessage(chat_id, "Сколько раз в неделю вы планируете выполнять эту привычку? (1-7):");
+        return;
+    }
+
+    if (current_state == "waiting_habit_frequency") {
         if (text == "Назад") {
             clearUserState(chat_id);
             sendMessage(chat_id, "Добавление привычки отменено", createMainKeyboard());
@@ -270,15 +295,67 @@ void TelegramBot::handleAddHabit(long chat_id, const std::string& text, Database
         }
         
         try {
-            std::cout << "Добавление привычки: '" << text << "'" << std::endl;
-            db.addHabit(1, text, "Добавлено через бота", 7);
+            int frequency = std::stoi(text);
+            if (frequency < 1 || frequency > 7) {
+                sendMessage(chat_id, "Пожалуйста, введите число от 1 до 7:");
+                return;
+            }
+
+            std::string habit_name;
+            {
+                std::lock_guard<std::mutex> lock(state_mutex);
+                habit_name = user_temp_data[chat_id];
+                user_temp_data[chat_id] = habit_name + "|" + std::to_string(frequency);
+            }
             
+            setUserState(chat_id, "waiting_habit_description");
+            sendMessage(chat_id, "Введите описание привычки:");
+            return;
+            
+        } catch (const std::exception& e) {
+            sendMessage(chat_id, "Пожалуйста, введите число от 1 до 7:");
+            return;
+        }
+    }
+
+    if (current_state == "waiting_habit_description") {
+        if (text == "Назад") {
             clearUserState(chat_id);
-            sendMessage(chat_id, "Привычка добавлена: " + text, createMainKeyboard());
+            sendMessage(chat_id, "Добавление привычки отменено", createMainKeyboard());
+            return;
+        }
+        
+        std::string habit_data;
+        {
+            std::lock_guard<std::mutex> lock(state_mutex);
+            habit_data = user_temp_data[chat_id];
+        }
+        
+        size_t separator = habit_data.find("|");
+        if (separator == std::string::npos) {
+            sendMessage(chat_id, "Ошибка при добавлении привычки.", createMainKeyboard());
+            clearUserState(chat_id);
+            return;
+        }
+        
+        std::string habit_name = habit_data.substr(0, separator);
+        int frequency = std::stoi(habit_data.substr(separator + 1));
+        std::string description = text.empty() ? "Добавлено через бота" : text;
+        
+        try {
+            db.addHabit(1, habit_name, description, frequency);
+            clearUserState(chat_id);
+            
+            std::string message = "Привычка добавлена!\n\nНазвание: " + habit_name + 
+                                 "\nЦель: " + std::to_string(frequency) + " раз/неделю" +
+                                 "\nОписание: " + description;
+            
+            sendMessage(chat_id, message, createMainKeyboard());
             
         } catch (const std::exception& e) {
             std::cerr << "Ошибка при добавлении привычки: " << e.what() << std::endl;
-            sendMessage(chat_id, "Ошибка при добавлении привычки. Попробуйте снова:");
+            sendMessage(chat_id, "Ошибка при добавлении привычки.", createMainKeyboard());
+            clearUserState(chat_id);
         }
     }
 }
@@ -518,7 +595,15 @@ void TelegramBot::processUpdates(Database& db) {
                 }
                 else {
                     std::string state = getUserState(chat_id);
+                    std::cout << "DEBUG: User state: " << state << std::endl;
+                    
                     if (state == "waiting_habit_name") {
+                        handleAddHabit(chat_id, text, db);
+                    }
+                    else if (state == "waiting_habit_frequency") {
+                        handleAddHabit(chat_id, text, db);
+                    }
+                    else if (state == "waiting_habit_description") {
                         handleAddHabit(chat_id, text, db);
                     }
                     else if (state == "waiting_habit_id") {

@@ -357,7 +357,7 @@ std::string Database::getHabitsList(int userId) {
                    << " | " << status 
                    << "\nЦель: " << row["target_frequency"].c_str() << " раз/неделю";
             
-            if (!row["description"].is_null()) {
+            if (!row["description"].is_null() && !row["description"].as<std::string>().empty()) {
                 output << "\nОписание: " << row["description"].c_str();
             }
             output << "\n\n";

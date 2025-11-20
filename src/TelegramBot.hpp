@@ -26,6 +26,7 @@ private:
     json createMainKeyboard();
     json createHabitsKeyboard(Database& db, int userId);
     json createConfirmationKeyboard();
+    json createDescriptionKeyboard();
 
     void setUserState(long chat_id, const std::string& state);
     void clearUserState(long chat_id);
