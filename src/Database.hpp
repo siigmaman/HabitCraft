@@ -22,15 +22,12 @@ public:
     void logHabitComplection(int habitId, const std::string& date, 
                             const std::string& notes = "", int rating = 0);
 
-    void showProgressBars(int userId);
-
-    void showHabitStrength(int userId);
-
-    void showWeakestWeekday(int userId);
-
-    void showCurrentStreaks(int userId);
-
-    void listUserHabits(int userId);
+    std::string getProgressBars(int userId);
+    std::string getHabitStrength(int userId);
+    std::string getWeakestWeekday(int userId);
+    std::string getCurrentStreaks(int userId);
+    std::string getHabitsList(int userId);
+    std::string getUserHabitsForKeyboard(int userId); 
 
     void deleteHabit(int habitId);
 
