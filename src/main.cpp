@@ -33,6 +33,9 @@ int main() {
             }
 
             std::cout << "Подключение к базе данных успешно" << std::endl;
+
+            std::cout << "Создание таблиц..." << std::endl;
+            db.createTables("init_db.sql");
             
             TelegramBot bot(bot_token);
             std::cout << "Бот инициализирован, запуск цикла обновлений..." << std::endl;
