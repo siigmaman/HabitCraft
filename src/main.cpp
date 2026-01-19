@@ -1,6 +1,7 @@
 #include "Database.hpp"
 #include "TelegramBot.hpp"
 #include <iostream>
+#include <string>
 #include <thread>
 #include <chrono>
 #include <csignal>
@@ -14,8 +15,8 @@ void signalHandler(int signum) {
 }
 
 int main() {
-    std::signal(SIGINT, signalHandler);
-    std::signal(SIGTERM, signalHandler);
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
 
     std::cout << "Запуск HabitCraft Telegram Bot" << std::endl;
     std::string bot_token = "8179345923:AAFcuRfw9Ez9I1DYaZ0DX2FOc2T7RHXuCL8";
@@ -44,13 +45,9 @@ int main() {
                     error_count = 0;
                 } catch (const std::exception& e) {
                     error_count++;
-                    std::cerr << "Ошибка в цикле обновлений (" << error_count << "/10): " << e.what() << std::endl;
+                    std::cerr << "Ошибка в цикле обновлений: " << e.what() << std::endl;
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                 }
-            }
-            
-            if (error_count >= 10) {
-                std::cerr << "Слишком много последовательных ошибок, перезапуск..." << std::endl;
             }
             
         } catch (const std::exception& e) {

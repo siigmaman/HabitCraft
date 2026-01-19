@@ -43,6 +43,146 @@ void Database::createTables(const std::string& sqlFilePath) {
     }
 }
 
+int Database::getOrCreateUserByTelegramId(long telegram_id, 
+                                         const std::string& username, 
+                                         const std::string& first_name, 
+                                         const std::string& last_name) {
+    if (!isConnected()) return -1;
+
+    try {
+        pqxx::work txn(*conn);
+
+        pqxx::result result = txn.exec_params(
+            "SELECT user_id FROM telegram_users WHERE telegram_id = $1",
+            telegram_id
+        );
+        
+        if (!result.empty()) {
+            return result[0]["user_id"].as<int>();
+        }
+
+        std::string tg_username = username.empty() ? "user_" + std::to_string(telegram_id) : username;
+        std::string email = tg_username + "@telegram.habitcraft";
+
+        result = txn.exec_params(
+            "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING user_id",
+            tg_username, email
+        );
+        
+        int user_id = result[0]["user_id"].as<int>();
+
+        txn.exec_params(
+            "INSERT INTO telegram_users (telegram_id, user_id, username, first_name, last_name) "
+            "VALUES ($1, $2, $3, $4, $5)",
+            telegram_id, user_id, username, first_name, last_name
+        );
+        
+        txn.commit();
+        std::cout << "Создан новый пользователь: ID=" << user_id 
+                  << " для Telegram ID=" << telegram_id << std::endl;
+        
+        return user_id;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка получения/создания пользователя: " << e.what() << std::endl;
+        return -1;
+    }
+}
+
+int Database::getUserByTelegramId(long telegram_id) {
+    if (!isConnected()) return -1;
+
+    try {
+        pqxx::work txn(*conn);
+        pqxx::result result = txn.exec_params(
+            "SELECT user_id FROM telegram_users WHERE telegram_id = $1",
+            telegram_id
+        );
+        
+        if (!result.empty()) {
+            return result[0]["user_id"].as<int>();
+        }
+        return -1;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка получения пользователя: " << e.what() << std::endl;
+        return -1;
+    }
+}
+
+void Database::deleteHabit(int userId, int habitId) {
+    if (!isConnected()) {
+        std::cerr << "Нет подключения к БД при удалении привычки" << std::endl;
+        return;
+    }
+
+    try {
+        pqxx::work txn(*conn);
+
+        pqxx::result check = txn.exec_params(
+            "SELECT title FROM habits WHERE habit_id = $1 AND user_id = $2", 
+            habitId, userId
+        );
+        
+        if (check.empty()) {
+            std::cout << "Привычка не найдена или не принадлежит пользователю" << std::endl;
+            return;
+        }
+        
+        std::string habitTitle = check[0]["title"].c_str();
+
+        txn.exec_params("DELETE FROM habits WHERE habit_id = $1 AND user_id = $2", 
+                       habitId, userId);
+        txn.commit();
+        
+        std::cout << "Привычка удалена: " << habitTitle << " (ID: " << habitId << ")" 
+                  << " для пользователя ID=" << userId << std::endl;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка удаления привычки: " << e.what() << std::endl;
+    }
+}
+
+void Database::logHabitComplection(int userId, int habitId, const std::string& date, 
+                                  const std::string& notes, int rating) {
+    if (!isConnected()) return;
+
+    try {
+        pqxx::work check_txn(*conn);
+        pqxx::result check = check_txn.exec_params(
+            "SELECT habit_id FROM habits WHERE habit_id = $1 AND user_id = $2",
+            habitId, userId
+        );
+        check_txn.commit();
+        
+        if (check.empty()) {
+            std::cerr << "Привычка " << habitId << " не принадлежит пользователю " << userId << std::endl;
+            return;
+        }
+
+        pqxx::work txn(*conn);
+        
+        if (rating > 0) {
+            txn.exec_params(
+                "INSERT INTO habit_logs (habit_id, completed_date, notes, rating) VALUES ($1, $2, $3, $4) "
+                "ON CONFLICT (habit_id, completed_date) DO UPDATE SET notes = EXCLUDED.notes, rating = EXCLUDED.rating",
+                habitId, date, notes, rating
+            );
+        } else {
+            txn.exec_params(
+                "INSERT INTO habit_logs (habit_id, completed_date, notes) VALUES ($1, $2, $3) "
+                "ON CONFLICT (habit_id, completed_date) DO UPDATE SET notes = EXCLUDED.notes",
+                habitId, date, notes
+            );
+        }
+        
+        txn.commit();
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка логирования привычки: " << e.what() << std::endl;
+    }
+}
+
 void Database::addUser(const std::string& username, const std::string& email) {
     if (!isConnected()) return;
 
@@ -71,31 +211,6 @@ void Database::addHabit(int userId, const std::string& title,
         txn.commit();
     } catch (const std::exception& e) {
         std::cerr << "Ошибка добавления привычки: " << e.what() << std::endl;
-    }
-}
-
-void Database::logHabitComplection(int habitId, const std::string& date, 
-                                  const std::string& notes, int rating) {
-    if (!isConnected()) return;
-
-    try {
-        pqxx::work txn(*conn);
-        
-        if (rating > 0) {
-            txn.exec_params(
-                "INSERT INTO habit_logs (habit_id, completed_date, notes, rating) VALUES ($1, $2, $3, $4)",
-                habitId, date, notes, rating
-            );
-        } else {
-            txn.exec_params(
-                "INSERT INTO habit_logs (habit_id, completed_date, notes) VALUES ($1, $2, $3)",
-                habitId, date, notes
-            );
-        }
-        
-        txn.commit();
-    } catch (const std::exception& e) {
-        std::cerr << "Ошибка логирования привычки: " << e.what() << std::endl;
     }
 }
 
@@ -392,37 +507,6 @@ std::string Database::getUserHabitsForKeyboard(int userId) {
 
     } catch (const std::exception& e) {
         return "";
-    }
-}
-
-void Database::deleteHabit(int habitId) {
-    if (!isConnected()) {
-        std::cerr << "Нет подключения к БД при удалении привычки" << std::endl;
-        return;
-    }
-
-    try {
-        pqxx::work txn(*conn);
-        
-        pqxx::result check = txn.exec_params(
-            "SELECT title FROM habits WHERE habit_id = $1", 
-            habitId
-        );
-        
-        if (check.empty()) {
-            std::cout << "Привычка с ID " << habitId << " не найдена" << std::endl;
-            return;
-        }
-        
-        std::string habitTitle = check[0]["title"].c_str();
-
-        txn.exec_params("DELETE FROM habits WHERE habit_id = $1", habitId);
-        txn.commit();
-        
-        std::cout << "Привычка удалена: " << habitTitle << " (ID: " << habitId << ")" << std::endl;
-        
-    } catch (const std::exception& e) {
-        std::cerr << "Ошибка удаления привычки ID " << habitId << ": " << e.what() << std::endl;
     }
 }
 

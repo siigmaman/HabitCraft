@@ -14,7 +14,8 @@ private:
     std::string token;
     std::string api_url;
     long long last_update_id = 0;
-    
+
+    std::map<long, int> user_id_cache;
     std::map<long, std::string> user_states;
     std::map<long, std::string> user_temp_data;
     std::map<long, std::chrono::steady_clock::time_point> state_timestamps;
@@ -31,6 +32,7 @@ private:
     void setUserState(long chat_id, const std::string& state);
     void clearUserState(long chat_id);
     std::string getUserState(long chat_id);
+    int getOrCacheUserId(long chat_id, Database& db, const json& message);
 
 public:
     TelegramBot(const std::string& bot_token);
@@ -40,11 +42,11 @@ public:
     
     void cleanupExpiredStates();  
     
-    void handleStart(long chat_id);
-    void handleAddHabit(long chat_id, const std::string& text, Database& db);
-    void handleListHabits(long chat_id, Database& db);
-    void handleStats(long chat_id, Database& db);
-    void handleProgress(long chat_id, Database& db);
-    void handleLogHabit(long chat_id, const std::string& text, Database& db);
-    void handleDeleteHabit(long chat_id, const std::string& text, Database& db);
+    void handleStart(long chat_id, int user_id);
+    void handleAddHabit(long chat_id, int user_id, const std::string& text, Database& db);
+    void handleListHabits(long chat_id, int user_id, Database& db);
+    void handleStats(long chat_id, int user_id, Database& db);
+    void handleProgress(long chat_id, int user_id, Database& db);
+    void handleLogHabit(long chat_id, int user_id, const std::string& text, Database& db);
+    void handleDeleteHabit(long chat_id, int user_id, const std::string& text, Database& db);
 };

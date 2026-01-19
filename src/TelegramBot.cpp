@@ -77,7 +77,6 @@ std::string TelegramBot::httpRequest(const std::string& url, const std::string& 
         } else {
             long http_code = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-            std::cout << "Request successful, HTTP: " << http_code << ", length: " << response.length() << std::endl;
         }
 
         curl_easy_cleanup(curl);
@@ -215,7 +214,6 @@ void TelegramBot::sendMessage(long chat_id, const std::string& text, const json&
 
     if (response.find("\"ok\":true") == std::string::npos) {
         std::cerr << "ERROR: Failed to send message to " << chat_id << std::endl;
-        std::cerr << "Response: " << response << std::endl;
     }
 }
 
@@ -247,7 +245,40 @@ json TelegramBot::getUpdates() {
     return json::object();
 }
 
-void TelegramBot::handleStart(long chat_id) {
+int TelegramBot::getOrCacheUserId(long chat_id, Database& db, const json& message) {
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        auto it = user_id_cache.find(chat_id);
+        if (it != user_id_cache.end()) {
+            return it->second;
+        }
+    }
+    
+    std::string username = "";
+    std::string first_name = "";
+    std::string last_name = "";
+    
+    if (message.contains("username")) {
+        username = message["username"];
+    }
+    if (message.contains("first_name")) {
+        first_name = message["first_name"];
+    }
+    if (message.contains("last_name")) {
+        last_name = message["last_name"];
+    }
+    
+    int user_id = db.getOrCreateUserByTelegramId(chat_id, username, first_name, last_name);
+    
+    if (user_id != -1) {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        user_id_cache[chat_id] = user_id;
+    }
+    
+    return user_id;
+}
+
+void TelegramBot::handleStart(long chat_id, int user_id) {
     clearUserState(chat_id);
     
     std::string welcome = 
@@ -257,7 +288,7 @@ void TelegramBot::handleStart(long chat_id) {
     sendMessage(chat_id, welcome, createMainKeyboard());
 }
 
-void TelegramBot::handleAddHabit(long chat_id, const std::string& text, Database& db) {
+void TelegramBot::handleAddHabit(long chat_id, int user_id, const std::string& text, Database& db) {
     std::string current_state = getUserState(chat_id);
 
     if (text == "Добавить привычку") {
@@ -343,7 +374,7 @@ void TelegramBot::handleAddHabit(long chat_id, const std::string& text, Database
         std::string description = text.empty() ? "Добавлено через бота" : text;
         
         try {
-            db.addHabit(1, habit_name, description, frequency);
+            db.addHabit(user_id, habit_name, description, frequency);
             clearUserState(chat_id);
             
             std::string message = "Привычка добавлена!\n\nНазвание: " + habit_name + 
@@ -360,31 +391,31 @@ void TelegramBot::handleAddHabit(long chat_id, const std::string& text, Database
     }
 }
 
-void TelegramBot::handleListHabits(long chat_id, Database& db) {
+void TelegramBot::handleListHabits(long chat_id, int user_id, Database& db) {
     clearUserState(chat_id);
-    std::string habits_list = db.getHabitsList(1);
+    std::string habits_list = db.getHabitsList(user_id);
     sendMessage(chat_id, habits_list, createMainKeyboard());
 }
 
-void TelegramBot::handleStats(long chat_id, Database& db) {
+void TelegramBot::handleStats(long chat_id, int user_id, Database& db) {
     clearUserState(chat_id);
     std::stringstream stats;
     stats << "Статистика:\n\n";
     
-    stats << db.getHabitStrength(1) << "\n\n";
-    stats << db.getWeakestWeekday(1) << "\n\n";
-    stats << db.getCurrentStreaks(1);
+    stats << db.getHabitStrength(user_id) << "\n\n";
+    stats << db.getWeakestWeekday(user_id) << "\n\n";
+    stats << db.getCurrentStreaks(user_id);
     
     sendMessage(chat_id, stats.str(), createMainKeyboard());
 }
 
-void TelegramBot::handleProgress(long chat_id, Database& db) {
+void TelegramBot::handleProgress(long chat_id, int user_id, Database& db) {
     clearUserState(chat_id);
-    std::string progress = db.getProgressBars(1);
+    std::string progress = db.getProgressBars(user_id);
     sendMessage(chat_id, progress, createMainKeyboard());
 }
 
-void TelegramBot::handleLogHabit(long chat_id, const std::string& text, Database& db) {
+void TelegramBot::handleLogHabit(long chat_id, int user_id, const std::string& text, Database& db) {
     std::string current_state = getUserState(chat_id);
     
     if (current_state == "waiting_habit_id") {
@@ -405,7 +436,7 @@ void TelegramBot::handleLogHabit(long chat_id, const std::string& text, Database
                            << std::setw(2) << std::setfill('0') << (tm->tm_mon + 1) << "-" 
                            << std::setw(2) << std::setfill('0') << tm->tm_mday;
                     
-                    db.logHabitComplection(habit_id, date_ss.str(), "Выполнено через бота", 0);
+                    db.logHabitComplection(user_id, habit_id, date_ss.str(), "Выполнено через бота", 0);
                     clearUserState(chat_id);
                     sendMessage(chat_id, "Привычка отмечена как выполненная!", createMainKeyboard());
                     return;
@@ -417,7 +448,7 @@ void TelegramBot::handleLogHabit(long chat_id, const std::string& text, Database
         }
         clearUserState(chat_id);
     } else {
-        std::string habits_info = db.getUserHabitsForKeyboard(1);
+        std::string habits_info = db.getUserHabitsForKeyboard(user_id);
         if (habits_info.empty()) {
             sendMessage(chat_id, "У вас нет активных привычек. Сначала добавьте привычку.", createMainKeyboard());
             return;
@@ -425,18 +456,17 @@ void TelegramBot::handleLogHabit(long chat_id, const std::string& text, Database
         
         std::string message = "Выберите привычку для отметки:\n\n" + habits_info;
         setUserState(chat_id, "waiting_habit_id");
-        sendMessage(chat_id, message, createHabitsKeyboard(db, 1));
+        sendMessage(chat_id, message, createHabitsKeyboard(db, user_id));
     }
 }
 
-void TelegramBot::handleDeleteHabit(long chat_id, const std::string& text, Database& db) {
+void TelegramBot::handleDeleteHabit(long chat_id, int user_id, const std::string& text, Database& db) {
     std::string current_state = getUserState(chat_id);
-    std::cout << "DEBUG: handleDeleteHabit - state: " << current_state << ", text: " << text << std::endl;
 
     if (text == "Удалить привычку") {
         clearUserState(chat_id);
         
-        std::string habits_info = db.getUserHabitsForKeyboard(1);
+        std::string habits_info = db.getUserHabitsForKeyboard(user_id);
         if (habits_info.empty()) {
             sendMessage(chat_id, "У вас нет привычек для удаления.", createMainKeyboard());
             return;
@@ -444,7 +474,7 @@ void TelegramBot::handleDeleteHabit(long chat_id, const std::string& text, Datab
         
         setUserState(chat_id, "waiting_habit_to_delete");
         std::string message = "Выберите привычку для удаления:\n\n" + habits_info;
-        sendMessage(chat_id, message, createHabitsKeyboard(db, 1));
+        sendMessage(chat_id, message, createHabitsKeyboard(db, user_id));
         return;
     }
 
@@ -458,19 +488,18 @@ void TelegramBot::handleDeleteHabit(long chat_id, const std::string& text, Datab
         try {
             size_t id_start = text.find("(ID: ");
             if (id_start == std::string::npos) {
-                sendMessage(chat_id, "Не удалось распознать привычку. Попробуйте снова:", createHabitsKeyboard(db, 1));
+                sendMessage(chat_id, "Не удалось распознать привычку. Попробуйте снова:", createHabitsKeyboard(db, user_id));
                 return;
             }
             
             id_start += 5;
             size_t id_end = text.find(")", id_start);
             if (id_end == std::string::npos) {
-                sendMessage(chat_id, "Не удалось распознать привычку. Попробуйте снова:", createHabitsKeyboard(db, 1));
+                sendMessage(chat_id, "Не удалось распознать привычку. Попробуйте снова:", createHabitsKeyboard(db, user_id));
                 return;
             }
             
             std::string id_str = text.substr(id_start, id_end - id_start);
-            std::cout << "DEBUG: Parsed habit ID: " << id_str << std::endl;
 
             std::string habit_name = text.substr(0, text.find("(ID:"));
             size_t last_char = habit_name.find_last_not_of(" \n\r\t");
@@ -493,7 +522,7 @@ void TelegramBot::handleDeleteHabit(long chat_id, const std::string& text, Datab
             
         } catch (const std::exception& e) {
             std::cerr << "Ошибка при разборе привычки: " << e.what() << std::endl;
-            sendMessage(chat_id, "Ошибка при выборе привычки. Попробуйте снова:", createHabitsKeyboard(db, 1));
+            sendMessage(chat_id, "Ошибка при выборе привычки. Попробуйте снова:", createHabitsKeyboard(db, user_id));
         }
         return;
     }
@@ -524,9 +553,8 @@ void TelegramBot::handleDeleteHabit(long chat_id, const std::string& text, Datab
                 std::string habit_name = habit_data.substr(separator + 1);
                 
                 int habit_id = std::stoi(id_str);
-                std::cout << "DEBUG: Deleting habit ID: " << habit_id << " - " << habit_name << std::endl;
                 
-                db.deleteHabit(habit_id);
+                db.deleteHabit(user_id, habit_id);
 
                 clearUserState(chat_id);
                 
@@ -548,7 +576,6 @@ void TelegramBot::handleDeleteHabit(long chat_id, const std::string& text, Datab
     }
 }
 
-
 void TelegramBot::processUpdates(Database& db) {
     try {
         json updates = getUpdates();
@@ -559,7 +586,6 @@ void TelegramBot::processUpdates(Database& db) {
         }
 
         auto update_list = updates["result"];
-        std::cout << "Processing " << update_list.size() << " updates" << std::endl;
 
         for (const auto& update : update_list) {
             try {
@@ -570,47 +596,51 @@ void TelegramBot::processUpdates(Database& db) {
                 long chat_id = update["message"]["chat"]["id"];
                 std::string text = update["message"]["text"];
                 
-                std::cout << "Message from " << chat_id << ": " << text << std::endl;
+                int user_id = getOrCacheUserId(chat_id, db, update["message"]["chat"]);
+                
+                if (user_id == -1) {
+                    std::cerr << "Не удалось получить/создать пользователя для chat_id: " << chat_id << std::endl;
+                    continue;
+                }
 
                 if (text == "/start" || text == "Назад") {
-                    handleStart(chat_id);
+                    handleStart(chat_id, user_id);
                 }
                 else if (text == "Добавить привычку") {
-                    handleAddHabit(chat_id, text, db);
+                    handleAddHabit(chat_id, user_id, text, db);
                 }
                 else if (text == "Мои привычки") {
-                    handleListHabits(chat_id, db);
+                    handleListHabits(chat_id, user_id, db);
                 }
                 else if (text == "Статистика") {
-                    handleStats(chat_id, db);
+                    handleStats(chat_id, user_id, db);
                 }
                 else if (text == "Прогресс") {
-                    handleProgress(chat_id, db);
+                    handleProgress(chat_id, user_id, db);
                 }
                 else if (text == "Отметить выполнение") {
-                    handleLogHabit(chat_id, text, db);
+                    handleLogHabit(chat_id, user_id, text, db);
                 }
                 else if (text == "Удалить привычку") {
-                    handleDeleteHabit(chat_id, text, db);
+                    handleDeleteHabit(chat_id, user_id, text, db);
                 }
                 else {
                     std::string state = getUserState(chat_id);
-                    std::cout << "DEBUG: User state: " << state << std::endl;
                     
                     if (state == "waiting_habit_name") {
-                        handleAddHabit(chat_id, text, db);
+                        handleAddHabit(chat_id, user_id, text, db);
                     }
                     else if (state == "waiting_habit_frequency") {
-                        handleAddHabit(chat_id, text, db);
+                        handleAddHabit(chat_id, user_id, text, db);
                     }
                     else if (state == "waiting_habit_description") {
-                        handleAddHabit(chat_id, text, db);
+                        handleAddHabit(chat_id, user_id, text, db);
                     }
                     else if (state == "waiting_habit_id") {
-                        handleLogHabit(chat_id, text, db);
+                        handleLogHabit(chat_id, user_id, text, db);
                     }
                     else if (state == "waiting_habit_to_delete" || state == "confirming_deletion") {
-                        handleDeleteHabit(chat_id, text, db);
+                        handleDeleteHabit(chat_id, user_id, text, db);
                     }
                     else {
                         sendMessage(chat_id, "Используйте кнопки для управления привычками", createMainKeyboard());
