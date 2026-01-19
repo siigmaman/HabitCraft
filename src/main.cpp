@@ -19,12 +19,12 @@ int main() {
     signal(SIGTERM, signalHandler);
 
     std::cout << "Запуск HabitCraft Telegram Bot" << std::endl;
-    std::string bot_token = "8179345923:AAFcuRfw9Ez9I1DYaZ0DX2FOc2T7RHXuCL8";
+    //std::string bot_token = "***";
 
     while (!stop) {
         try {
             std::cout << "Подключение к базе данных..." << std::endl;
-            Database db("host=127.0.0.1 port=5432 dbname=habitcraft user=habit_user password=my_secure_password");
+            //Database db("host=*** port=*** dbname=*** user=*** password=***");
 
             if (!db.isConnected()) {
                 std::cerr << "Не удалось подключиться к базе данных" << std::endl;
